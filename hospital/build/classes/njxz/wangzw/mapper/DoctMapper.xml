@@ -1,0 +1,323 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="njxz.wangzw.mapper.DoctMapper">
+	<select id="login" parameterType="Doct" resultType="Doct">
+		SELECT * FROM
+		TB_DOCT WHERE DOCT_NAME=#{doctName} AND DOCT_STATUS='1'
+	</select>
+	<select id="showGrant" parameterType="Doct" resultType="Grant">
+		select
+		tg.* from tb_grant tg, tb_doct_grant tdg
+		where tdg.dg_grant_id =
+		tg.grant_id
+		and tdg.dg_job = #{doctJob}
+	</select>
+	<select id="scanWechat" parameterType="Map" statementType="CALLABLE">  
+        <![CDATA[ 
+        call doct_scan(
+        #{doctIdIn,mode=IN,jdbcType=INTEGER},   
+        #{udCodeIn,mode=IN,jdbcType=VARCHAR},   
+        #{msg,mode=OUT,jdbcType=VARCHAR}
+        )
+        ]]>
+	</select>
+
+	<select id="nurseConfirm" parameterType="Map" statementType="CALLABLE">  
+        <![CDATA[ 
+        call nurse_confirm(   
+        #{udCodeIn,mode=IN,jdbcType=VARCHAR},   
+        #{msg,mode=OUT,jdbcType=VARCHAR}
+        )
+        ]]>
+	</select>
+	<!-- 管理员添加新的员工 -->
+	<insert id="empAdd" parameterType="Doct">
+		insert into
+		tb_doct(doct_name,doct_dept_no,doct_pro,doct_num,doct_password,doct_salt,doct_job,doct_birthday,doct_sex)
+		values(#{doctName},#{deptNo},#{doctPro},#{doctNum},#{doctPassword},#{doctSalt},#{doctJob},#{doctBirthday},#{doctSex})
+	</insert>
+	<!-- 显示所有的门诊部门信息供选 -->
+	<select id="showDoctDeptAll" resultType="Dept">
+		select * from tb_dept where
+		dept_status ='1' and dept_no between 1000 and 1099
+	</select>
+	<!-- 检索单个医生信息 -->
+	<select id="showDoctInfoById" parameterType="Doct" resultMap="doctMap">
+		SELECT * FROM TB_DOCT DOCT 
+		LEFT JOIN TB_DEPT DEPT ON DEPT.DEPT_NO = DOCT.DOCT_DEPT_NO 
+		LEFT JOIN TB_TITLE TITLE ON TITLE.TT_ID = DOCT.DOCT_TITLE_ID WHERE
+		DOCT.DOCT_ID =#{doctId}
+	</select>
+	<resultMap type="Doct" id="doctMap" autoMapping="true">
+		<id column="doct_id" property="doctId" />
+		<association property="dept" javaType="Dept" autoMapping="true">
+			<id column="DEPT_NO" property="deptNo" />
+		</association>
+			<association property="title" javaType="Title" autoMapping="true">
+			<id column="TT_ID" property="ttId" />
+		</association>
+	</resultMap>
+	<!-- 检索所有的部门的信息 -->
+	<select id="getDeptAll" resultType="Dept">
+		SELECT * FROM TB_DEPT
+	</select>
+	<!-- 检索所有医生信息 -->
+	<select id="showEmpQuery" resultMap="doctMap">
+		SELECT * FROM (
+		SELECT * FROM
+		(
+		SELECT DOCT.*,DEPT.*,TT.*,ROWNUM R FROM TB_DOCT
+		DOCT,TB_DEPT DEPT,TB_TITLE TT
+		WHERE
+		DEPT.DEPT_NO=DOCT.DOCT_DEPT_NO 
+		AND TT.TT_ID = DOCT.DOCT_TITLE_ID 
+		ORDER BY DOCT.DOCT_ID
+		) WHERE R &lt;= #{endRownum}
+		) WHERE
+		R >= #{stRownum}
+	</select>
+	<!-- 所有医生的个数 用于分页 -->
+	<select id="countShowEmpQuery" resultType="int">
+		SELECT count(*) FROM
+		TB_DOCT DOCT,TB_DEPT DEPT,TB_TITLE TT
+		WHERE
+		DEPT.DEPT_NO=DOCT.DOCT_DEPT_NO
+		AND TT.TT_ID = DOCT.DOCT_TITLE_ID 
+	</select>
+	<!-- 依据条件检索医生信息 -->
+	<select id="showEmpQueryBySearchInfo" parameterType="Map"
+		resultMap="doctMap">
+		SELECT * FROM (
+		SELECT * FROM
+		(
+		SELECT DOCT.*,DEPT.*,TT.*,ROWNUM R FROM TB_DOCT
+		DOCT,TB_DEPT DEPT,TB_TITLE TT
+		<where>
+			DEPT.DEPT_NO=DOCT.DOCT_DEPT_NO AND TT.TT_ID = DOCT.DOCT_TITLE_ID
+		<if test='searchType == "name" '>
+			AND DOCT.DOCT_NAME LIKE  CONCAT(CONCAT('%',#{searchInfo}),'%')
+		</if>
+		<if test='searchType == "job" '>
+			AND DOCT.DOCT_JOB = #{searchInfo}
+		</if>
+		<if test='searchType == "deptNo" '>
+		    AND DOCT.DOCT_DEPT_NO = #{searchInfo}
+		</if>
+		<if test='searchType == "status" '>
+			AND DOCT.DOCT_STATUS = #{searchInfo}
+		</if>
+		</where>
+		) WHERE R &lt;= #{endRownum}
+		) WHERE
+		R >= #{stRownum}
+	</select>
+	<!-- 依据条件检索医生信息的个数 -->
+	<select id="countShowEmpQueryBySearchInfo" parameterType="Map"
+		resultType="int">
+		SELECT count(*) FROM TB_DOCT
+		DOCT,TB_DEPT DEPT,TB_TITLE TT
+			<where>
+			DEPT.DEPT_NO=DOCT.DOCT_DEPT_NO AND TT.TT_ID = DOCT.DOCT_TITLE_ID
+		<if test='searchType == "name" '>
+			AND DOCT.DOCT_NAME LIKE  CONCAT(CONCAT('%',#{searchInfo}),'%')
+		</if>
+		<if test='searchType == "job" '>
+			AND DOCT.DOCT_JOB = #{searchInfo}
+		</if>
+		<if test='searchType == "deptNo" '>
+		    AND DOCT.DOCT_DEPT_NO = #{searchInfo}
+		</if>
+		<if test='searchType == "status" '>
+			AND DOCT.DOCT_STATUS = #{searchInfo}
+		</if>
+		</where>
+	</select>
+
+	<!-- 管理员更新医生的个人信息 -->
+	<update id="updateDoct" parameterType="Doct">
+		UPDATE TB_DOCT
+		SET
+		doct_pro=#{doctPro}
+		WHERE DOCT_ID = #{doctId}
+	</update>
+	<!-- 更新医生的个人信息 -->
+	<update id="updateDoctForMgr" parameterType="Doct">
+		UPDATE TB_DOCT
+		<set>
+			<if test="deptNo != 0">doct_dept_no=#{deptNo},</if>
+			<if test="deptNo == 0">doct_dept_no=1000,</if>
+			<if test="doctJob != null">doct_job=#{doctJob},</if>
+			<if test="doctTitleId != 0">doct_title_id=#{doctTitleId},</if>
+			doct_num=#{doctNum},
+			doct_pro=#{doctPro} ,
+			doct_status=#{doctStatus}
+		</set>
+		WHERE DOCT_ID = #{doctId}
+	</update>
+	<!-- 医生 查看当前排队信息 这是集合 状态 0 1 2 3 4 的 都有 -->
+	<select id="showQuery" parameterType="Doct" resultMap="appointMap">
+		SELECT
+		UD.UD_ID,
+		UD.UD_USER_ID,
+		UD.UD_DEPT_NO,
+		UD.UD_DOCT_ID,
+		UD.UD_SYSDATE,
+		UD.UD_PREDATE,
+		UD.UD_COMDATE,
+		UD.UD_STATUS,
+		UD.UD_CODE,
+		UD.UD_MSG,
+		TU.USER_ID,
+		TU.USER_NAME,
+		TU.USER_PASSWORD,
+		TU.USER_SALT,
+		TU.USER_EMAIL,
+		TU.USER_IDCARD,
+		TU.USER_REALNAME,
+		TU.USER_PHONE,
+		TU.USER_WECHAR,
+		TU.USER_BACKUP,
+		TU.USER_BREAK,
+		TU.USER_STATUS,
+		TU.USER_INFO1,
+		TU.USER_INFO2,
+		TU.USER_INFO3,
+		TU.USER_INFO4,
+		TU.USER_INFO5,
+		TU.USER_INFO6,
+		TU.USER_INFO7,
+		TU.USER_INFO8,
+		TU.USER_INFO9,
+		TU.USER_INFO10,
+		TU.USER_BIRTHDAY,
+		TU.USER_SEX,
+		UD.UD_NO FROM TB_USER_DOCT
+		UD,
+		TB_DOCT DOCT,
+		TB_DEPT DEPT,
+		TB_USER TU
+		WHERE
+		UD.UD_DOCT_ID =
+		DOCT.DOCT_ID AND
+		TU.USER_ID = UD.UD_USER_ID AND
+		DOCT.DOCT_DEPT_NO =
+		DEPT.DEPT_NO
+		AND UD.UD_START_DATE IS NULL AND
+		UD.UD_MSG='SUCCESS' AND
+		DOCT.DOCT_ID=#{doctId}
+		AND
+		TRUNC(SYSDATE)=TRUNC(UD.UD_PREDATE)
+	</select>
+
+	<resultMap type="Appoint" id="appointMap" autoMapping="true">
+		<id column="ud_id" property="udId" />
+		<association property="user" javaType="User" autoMapping="true">
+			<id column="user_id" property="userId" />
+		</association>
+		<association property="doct" javaType="Doct" autoMapping="true">
+			<id column="doct_id" property="doctId" />
+		</association>
+	</resultMap>
+	<!-- 医生 查看当前排队信息 这是单个数据 状态 2 -->
+	<select id="showUserInfoByDoctId" parameterType="Doct"
+		resultMap="appointMap">
+		SELECT
+		UD.UD_ID,
+		UD.UD_USER_ID,
+		UD.UD_DEPT_NO,
+		UD.UD_DOCT_ID,
+		UD.UD_SYSDATE,
+		UD.UD_PREDATE,
+		UD.UD_COMDATE,
+		UD.UD_STATUS,
+		UD.UD_CODE,
+		UD.UD_MSG,
+		TU.USER_ID,
+		TU.USER_NAME,
+		TU.USER_PASSWORD,
+		TU.USER_SALT,
+		TU.USER_EMAIL,
+		TU.USER_IDCARD,
+		TU.USER_REALNAME,
+		TU.USER_PHONE,
+		TU.USER_WECHAR,
+		TU.USER_BACKUP,
+		TU.USER_BREAK,
+		TU.USER_STATUS,
+		TU.USER_INFO1,
+		TU.USER_INFO2,
+		TU.USER_INFO3,
+		TU.USER_INFO4,
+		TU.USER_INFO5,
+		TU.USER_INFO6,
+		TU.USER_INFO7,
+		TU.USER_INFO8,
+		TU.USER_INFO9,
+		TU.USER_INFO10,
+		TU.USER_BIRTHDAY,
+		TU.USER_SEX,
+		UD.UD_NO
+		FROM TB_USER_DOCT UD,
+		TB_DOCT DOCT,
+		TB_DEPT DEPT,
+		TB_USER TU
+		WHERE
+		UD.UD_DOCT_ID = DOCT.DOCT_ID AND
+		TU.USER_ID = UD.UD_USER_ID AND
+		DOCT.DOCT_DEPT_NO = DEPT.DEPT_NO AND
+		UD.UD_STATUS = '2' AND
+		UD.UD_MSG =
+		'SUCCESS' AND
+		DOCT.DOCT_ID=#{doctId}
+		AND
+		TRUNC(SYSDATE)=TRUNC(UD.UD_PREDATE)
+	</select>
+	<!-- 提交医生填写的诊断 信息 （ 可添加复诊时间字段） -->
+	<update id="doctCommitResult" parameterType="Appoint">
+		update tb_user_doct
+		set ud_status=3 , ud_desc =#{udDesc} ,
+		ud_result =#{udResult} ,
+		ud_medc=#{udMedc}, ud_end_date=sysdate ,
+		ud_review =#{udReview} where
+		ud_code=#{udCode}
+	</update>
+	<!-- 将医生的状态设置为0 delEmpById -->
+	<update id="delEmpById" parameterType="Doct">
+		update tb_doct set
+		doct_status = '0' where doct_id=#{doctId}
+	</update>
+	<!-- 检索当占用医生资源的诊断信息 -->
+	<select id="searchAppointByDoctId" parameterType="Doct"
+		resultMap="appointMap">
+		select * from tb_user_doct ud , tb_user tu where
+		ud.ud_user_id = tu.user_id and ud.ud_status = 2 and ud.ud_doct_id =
+		#{doctId}
+		and trunc(ud.ud_predate) = trunc(sysdate)
+	</select>
+	<!-- 将医生的状态修改为0 待接诊 -->
+	<update id="readyScan" parameterType="Doct">
+		update tb_doct set
+		doct_inposition=0 where doct_id =#{doctId}
+	</update>
+
+	<!-- 将挂号表的状态修改为 3 （释放医生资源） -->
+	<update id="endWatch" parameterType="Appoint">
+		update tb_user_doct set
+		ud_status = 3 where ud_id = #{udId}
+	</update>
+	<!-- 护士依据部门编号显示对应的排队 情况 -->
+	<select id="nurseShowQuery" parameterType="Dept" resultMap="appointMap">
+		select * from tb_user tu ,tb_user_doct ud ,tb_doct td
+		where tu.user_id
+		= ud.ud_user_id
+		and ud.ud_doct_id = td.doct_id
+		and ud.ud_status in(1,2)
+		and trunc(ud.ud_predate) = trunc(sysdate)
+		and ud.ud_dept_no = #{deptNo}
+		order by ud.ud_status desc ,ud.ud_no
+	</select>
+	<!-- 显示包括管理站在内的所有部门信息 -->
+	<select id="showDeptAll" resultType="Dept">
+		select * from tb_dept where dept_status = 1 
+	</select>
+</mapper>

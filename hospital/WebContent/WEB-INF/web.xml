@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://xmlns.jcp.org/xml/ns/javaee" xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee http://xmlns.jcp.org/xml/ns/javaee/web-app_3_1.xsd" id="WebApp_ID" version="3.1">
+  <display-name>hospital</display-name>
+  <welcome-file-list>
+  	<welcome-file>page/user/userLogin.jsp</welcome-file>
+  </welcome-file-list>
+  
+  <context-param>
+  	<param-name>contextConfigLocation</param-name>
+  	<param-value>classpath:beans.xml</param-value>
+  </context-param>
+  <!-- 配置session时长 -->
+  	<session-config>
+		<session-timeout>30</session-timeout>
+	</session-config>
+  <!-- 为了启动struts2框架 -->
+  <filter>
+  	<filter-name>struts2</filter-name>
+  	<filter-class>org.apache.struts2.dispatcher.ng.filter.StrutsPrepareAndExecuteFilter</filter-class>
+  </filter>
+  <filter-mapping>
+  	<filter-name>struts2</filter-name>
+  	<url-pattern>/*</url-pattern>
+  </filter-mapping>
+  <filter>
+  	<filter-name>codeFilter</filter-name>
+  	<filter-class>njxz.wangzw.util.CodeFilter</filter-class>
+  </filter>
+    <filter-mapping>
+  	<filter-name>codeFilter</filter-name>
+  	<url-pattern>/*</url-pattern>
+  </filter-mapping>
+  <!-- 采用监听器的形式，启动Spring容器 -->
+  <listener>
+  	<listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
+  </listener>
+  
+  <!-- 监听你的发起请求，从而去实例化bean，就是为了让scope="request/session"起作用 -->
+  <listener>
+  	<listener-class>org.springframework.web.context.request.RequestContextListener</listener-class>
+  </listener>
+</web-app>

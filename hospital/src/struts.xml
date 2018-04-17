@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE struts PUBLIC
+	"-//Apache Software Foundation//DTD Struts Configuration 2.3//EN"
+	"http://struts.apache.org/dtds/struts-2.3.dtd">
+
+<struts>
+
+	<constant name="struts.enable.DynamicMethodInvocation" value="false"></constant>
+	<constant name="struts.devMode" value="true"></constant>
+
+
+	<package name="commonPackage" namespace="/" extends="struts-default">
+			<interceptors>
+			<interceptor name="loginInterceptor" class="njxz.wangzw.util.LoginInterceptor" />
+			<interceptor-stack name="inteStack">
+				<interceptor-ref name="defaultStack" />
+				<interceptor-ref name="loginInterceptor" />
+			</interceptor-stack>
+		</interceptors>
+	
+		<action name="user_*" class="userAction" method="{1}">
+			<result name="loginSuccess">/page/user/userIndex.jsp</result>
+			<result name="loginFail">/page/user/userLogin.jsp</result>
+			<result name="registSuccess">/page/user/userIndex.jsp</result>
+			<result name="registFail">/page/user/userRegist.jsp</result>
+			<result name="showDept">/page/user/deptChoose.jsp</result>
+			<result name="toChooseDate">/page/user/userAppointment.jsp</result>
+			<result name="toUserHistory">page/user/userHistory.jsp</result>
+		</action>
+
+	<action name="doct_*" class="doctAction" method="{1}">
+			<result name="loginSuccess">/page/doct/doctIndex.jsp</result>
+			<result name="toReadyWatch">/page/doct/doctWatch.jsp</result>
+			<result name="loginFail">/page/doct/doctLogin.jsp</result>
+			<result name="toShowDoctInfo">page/doct/doctInfo.jsp</result>
+			<result name="commitSuccess" >page/doct/doctMain.jsp</result>
+			<result name="showQuerySuccess">page/doct/showQuery.jsp</result>
+			<result name="toEditEmp">page/doct/empQuery.jsp</result>
+			<result name="toSingleEmpEdit">page/doct/empEdit.jsp</result>
+			<result name="toSingleEmpShow">page/doct/empShow.jsp</result>
+			<result name="toEmpAdd" > page/doct/empAdd.jsp</result>
+			<result name="toChooseDept" > page/doct/nurseDeptShow.jsp</result>
+			<result name="toNurseShowQuery" > page/doct/nurseShowQuery.jsp</result>
+		</action>
+	</package>
+
+</struts>

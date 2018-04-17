@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:tx="http://www.springframework.org/schema/tx" xmlns:context="http://www.springframework.org/schema/context"
+	xsi:schemaLocation="http://www.springframework.org/schema/context 
+     http://www.springframework.org/schema/context/spring-context-4.3.xsd
+     http://www.springframework.org/schema/beans 
+     http://www.springframework.org/schema/beans/spring-beans-4.3.xsd
+     http://www.springframework.org/schema/tx 
+     http://www.springframework.org/schema/tx/spring-tx-4.3.xsd
+     http://www.springframework.org/schema/aop 
+     http://www.springframework.org/schema/aop/spring-aop-4.3.xsd">
+	
+	<!-- 加载db的资源文件 -->
+	<context:property-placeholder location="classpath:db.properties"/>
+	
+	<!-- 以DBCP的连接池的形式，去连接数据库 -->
+	<bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource" destroy-method="close">
+		<property name="driverClassName" value="${jdbc.driver}"/>
+		<property name="url" value="${jdbc.url}"/>
+		<property name="username" value="${jdbc.username}"/>
+		<property name="password" value="${jdbc.password}"/>
+		<!-- 初始化连接数 -->
+        <property name="initialSize" value="1" />
+        <!-- 最大活动连接数 -->
+        <property name="maxActive" value="50" />
+        <!-- 最大空闲连接数 -->
+        <property name="maxIdle" value="5" />
+        <!-- 最小空闲连接数 -->
+        <property name="minIdle" value="15" />
+        <!-- 检测SQL -->
+        <property name="validationQuery" value="select 1 from dual" />
+        <property name="testOnBorrow" value="false" />
+        <!-- 定时对线程池中的链接进行validateObject校验 -->
+        <property name="testWhileIdle" value="true" />
+        <property name="testOnReturn" value="false" />
+        <!-- 获取连接最大等待时间 -->
+        <property name="maxWait" value="60000" />
+        <!-- 配置间隔多久才进行一次检测，检测需要关闭的空闲连接，单位是毫秒 -->
+        <property name="timeBetweenEvictionRunsMillis" value="60000" />
+        <!-- 空闲池中空闲连接能够被激活前的最小空闲时间（毫秒） -->
+        <property name="minEvictableIdleTimeMillis" value="25200000" />
+	</bean>
+	
+	<!-- 构建sqlSessionFactory的工厂 -->
+	<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="dataSource" ref="dataSource"/>
+		<property name="configLocation" value="classpath:mybatis-config.xml"/>
+	</bean>
+	
+	<!-- 配置数据源的事务管理 -->
+	<bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="dataSource"/>
+	</bean>
+	<!-- 为了用注解的形式，让事务生效 -->
+	<tx:annotation-driven transaction-manager="transactionManager"/>
+	
+	<context:component-scan base-package="njxz.wangzw" />
+	
+	<bean id="mapperScanner" class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+		<property name="basePackage" value="njxz.wangzw.mapper" />
+		<property name="sqlSessionFactoryBeanName" value="sqlSessionFactory" />		
+	</bean>
+	
+</beans>

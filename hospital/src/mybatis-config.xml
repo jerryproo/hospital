@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration PUBLIC "-//mybatis.org//DTD Config 3.0//EN" "http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+	
+	<settings>
+		<!-- 将mybatis的执行过程显示在控制台 -->
+		<setting name="logImpl" value="STDOUT_LOGGING"/>
+	
+ 	<!-- 	<setting name="logImpl" value="LOG4J2"/> -->
+ 
+ 	<!-- 开启驼峰式命名 -->
+ 
+		<setting name="mapUnderscoreToCamelCase" value="true"/>
+	</settings>
+	
+	<typeAliases>
+		<package name="njxz.wangzw.model"/>
+	</typeAliases>
+	
+	<mappers>
+		<package name="njxz.wangzw.mapper"/>
+	</mappers>
+	
+</configuration>

@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="njxz.wangzw.mapper.UserMapper">
+	<!-- 用户登陆 -->
+	<!-- <select id="login" parameterType="User" resultType="User"> SELECT * 
+		FROM TB_USER U WHERE U.USER_NAME=#{userName} AND U.USER_PASSWORD=#{userPassword} 
+		AND U.USER_STATUS='0' </select> -->
+	<!-- 0206更 使用加密密码登陆 改为获取该用户名对应的密码和盐值 在java中判断 -->
+	<select id="login" parameterType="User" resultType="User">
+		SELECT
+		* FROM TB_USER WHERE USER_NAME =#{userName}
+	</select>
+
+
+	<!-- 用户注册 -->
+	<insert id="regist" parameterType="User">
+		INSERT INTO TB_USER
+		(USER_NAME,USER_PASSWORD,USER_EMAIL,USER_IDCARD,USER_REALNAME,USER_PHONE,USER_WECHAR,USER_SALT)
+		VALUES(#{userName},#{userPassword},#{userEmail},#{userIdcard},#{userRealname},#{userPhone},#{userWechat},#{userSalt})
+	</insert>
+
+	<!-- 使用存储过程 获取相应日期和部门的各个时间段的已经挂号的人数 -->
+	<select id="getAppointByDay" parameterType="Map" statementType="CALLABLE">  
+        <![CDATA[ 
+        call appoint_count(
+        #{datein,mode=IN,jdbcType=VARCHAR},   
+        #{deptnoin,mode=IN,jdbcType=VARCHAR},   
+        #{doctTitle,mode=IN,jdbcType=VARCHAR}, 
+        #{count1,mode=OUT,jdbcType=INTEGER},
+        #{count2,mode=OUT,jdbcType=INTEGER},
+        #{count3,mode=OUT,jdbcType=INTEGER},
+        #{count4,mode=OUT,jdbcType=INTEGER},
+        #{count5,mode=OUT,jdbcType=INTEGER},
+        #{countno,mode=OUT,jdbcType=INTEGER},
+        #{deptName,mode=OUT,jdbcType=VARCHAR},
+        #{flag,mode=OUT,jdbcType=VARCHAR}
+        )
+        ]]>
+	</select>
+	<!-- 显示所有的部门信息供选 -->
+	<select id="showDeptAll" resultType="Dept">
+		select * from tb_dept where
+		dept_status ='1' and dept_no between 1000 and 1099
+	</select>
+	<!-- 调用存储过程添加用户挂号信息 -->
+	<select id="userAppoint" parameterType="Map" statementType="CALLABLE">  
+        <![CDATA[ 
+        call userAppoint(
+        #{rangeNo,mode=IN,jdbcType=INTEGER},   
+        #{deptNo,mode=IN,jdbcType=INTEGER},   
+        #{userId,mode=IN,jdbcType=INTEGER},
+        #{date,mode=IN,jdbcType=VARCHAR},
+        #{msg,mode=OUT,jdbcType=VARCHAR}
+        )
+        ]]>
+	</select>
+<!-- 依据用户Id查找挂号信息 -->
+	<select id="showUserAppointByUserId" parameterType="User" resultMap="AppointMap">
+		SELECT UD.UD_ID,
+		UD.UD_USER_ID,
+		UD.UD_DEPT_NO,
+		UD.UD_DOCT_ID,
+		UD.UD_SYSDATE,
+		UD.UD_PREDATE,
+		UD.UD_COMDATE,
+		UD.UD_STATUS,
+		UD.UD_CODE,
+		UD.UD_MSG,
+		UD.UD_INFO3,
+		UD.UD_INFO4,
+		UD.UD_INFO5,
+		UD.UD_INFO6,
+		UD.UD_INFO7,
+		UD.UD_INFO8,
+		UD.UD_INFO9,
+		UD.UD_INFO10,
+		UD.UD_NO,
+		TD.DEPT_ID,
+		TD.DEPT_NO,
+		TD.DEPT_NAME,
+		TD.DEPT_STATUS,
+		TD.DEPT_INFO1,
+		TD.DEPT_INFO2,
+		TD.DEPT_INFO3,
+		TD.DEPT_INFO4,
+		TD.DEPT_INFO5,
+		TD.DEPT_INFO6,
+		TD.DEPT_INFO7,
+		TD.DEPT_INFO8,
+		TD.DEPT_INFO9,
+		TD.DEPT_INFO10
+		FROM TB_USER_DOCT UD ,
+		TB_DEPT TD
+		WHERE UD.UD_STATUS='0' AND
+		UD.UD_DEPT_NO = TD.DEPT_NO AND
+		UD.UD_USER_ID =#{userId} 
+		AND SYSDATE &lt;= UD.UD_PREDATE
+
+	</select>
+
+	<resultMap type="Appoint" id="AppointMap" autoMapping="true">
+		<id column="UD_ID" property="udId" />
+		<association property="dept" javaType="Dept" autoMapping="true">
+			<id column="DEPT_NO" property="deptNo" />
+		</association>
+
+	</resultMap>
+</mapper>
